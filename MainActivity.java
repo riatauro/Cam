@@ -15,6 +15,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 
+import com.parse.ParseFile;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -68,26 +72,53 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("image");
         if (resultCode == RESULT_OK) {
             ImageView ivImage=(ImageView)findViewById(R.id.ivImage);
             if (requestCode == REQUEST_CAMERA) {
                 Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream();
                 thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
+//                byte[] dat = bytes.toByteArray();
+//                ParseFile imgFile = new ParseFile ("braveImg.png", dat);
+//                imgFile.saveInBackground();
+//
+//                //Info in Parse Dashboard
+//                ParseObject imageObj = new ParseObject ("ImageObj");
                 File destination = new File(Environment.getExternalStorageDirectory(),
                         System.currentTimeMillis() + ".jpg");
                 FileOutputStream fo;
+                byte[] dat=bytes.toByteArray();
                 try {
                     destination.createNewFile();
                     fo = new FileOutputStream(destination);
-                    fo.write(bytes.toByteArray());
+
+                    fo.write(dat);
                     fo.close();
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
                 ivImage.setImageBitmap(thumbnail);
+                ParseFile file = new ParseFile("androidbegin.jpeg", dat);
+                // Upload the image into Parse Cloud
+                file.saveInBackground();
+
+                // Create a New Class called "ImageUpload" in Parse
+                ParseObject imgupload = new ParseObject("image");
+
+                // Create a column named "ImageName" and set the string
+                imgupload.put("picname", "AndroidBegin Logo");
+
+                // Create a column named "ImageFile" and insert the image
+                imgupload.put("pics", file);
+
+                // Create the class and the columns
+                imgupload.saveInBackground();
+
+
             } else if (requestCode == SELECT_FILE) {
                 Uri selectedImageUri = data.getData();
                 String[] projection = { MediaStore.MediaColumns.DATA };
